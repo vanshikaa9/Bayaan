@@ -1,0 +1,18 @@
+Prioruty order for remaining time:
+
+Re-planning/agentic loop
+Flask UI — even ugly is fine
+Voice input
+README + demo video
+
+Once the backend feels stable, we'll move to:
+app.py
+templates/index.html
+static/style.css
+
+and connect everything.
+
+Voice input — speech_recognition library, mic → text → your existing pipeline. One function, not complicated.
+Regional language testing — test 4-5 languages against your existing parser and see what breaks.
+Make it actually agentic — the agent should ask follow-up questions autonomously, not just replan silently.
+Then UI.

@@ -1,0 +1,200 @@
+[
+  {
+    "id": 1,
+    "name": "Women's Black Cotton Kurti",
+    "category": "kurti",
+    "color": "black",
+    "price": 349,
+    "rating": 4.3,
+    "occasion": "casual",
+    "fabric": "cotton"
+  },
+  {
+    "id": 2,
+    "name": "Women's Pink Printed Kurti",
+    "category": "kurti",
+    "color": "pink",
+    "price": 399,
+    "rating": 4.1,
+    "occasion": "casual",
+    "fabric": "rayon"
+  },
+  {
+    "id": 3,
+    "name": "Women's Blue Anarkali Kurti",
+    "category": "kurti",
+    "color": "blue",
+    "price": 699,
+    "rating": 4.5,
+    "occasion": "party",
+    "fabric": "georgette"
+  },
+
+  {
+    "id": 4,
+    "name": "Black Embroidered Salwar Suit",
+    "category": "salwar suit",
+    "color": "black",
+    "price": 899,
+    "rating": 4.4,
+    "occasion": "party",
+    "fabric": "silk blend"
+  },
+  {
+    "id": 5,
+    "name": "Green Cotton Salwar Suit",
+    "category": "salwar suit",
+    "color": "green",
+    "price": 699,
+    "rating": 4.2,
+    "occasion": "casual",
+    "fabric": "cotton"
+  },
+
+  {
+    "id": 6,
+    "name": "Red Silk Saree",
+    "category": "saree",
+    "color": "red",
+    "price": 999,
+    "rating": 4.6,
+    "occasion": "wedding",
+    "fabric": "silk"
+  },
+  {
+    "id": 7,
+    "name": "Pink Georgette Saree",
+    "category": "saree",
+    "color": "pink",
+    "price": 799,
+    "rating": 4.2,
+    "occasion": "party",
+    "fabric": "georgette"
+  },
+
+  {
+    "id": 8,
+    "name": "White Cotton Dupatta",
+    "category": "dupatta",
+    "color": "white",
+    "price": 199,
+    "rating": 4.0,
+    "occasion": "casual",
+    "fabric": "cotton"
+  },
+  {
+    "id": 9,
+    "name": "Pink Chiffon Dupatta",
+    "category": "dupatta",
+    "color": "pink",
+    "price": 249,
+    "rating": 4.1,
+    "occasion": "party",
+    "fabric": "chiffon"
+  },
+
+  {
+    "id": 10,
+    "name": "Women's Blue Skinny Jeans",
+    "category": "jeans",
+    "color": "blue",
+    "price": 799,
+    "rating": 4.4,
+    "occasion": "casual",
+    "fabric": "denim"
+  },
+  {
+    "id": 11,
+    "name": "Women's Black Straight Fit Jeans",
+    "category": "jeans",
+    "color": "black",
+    "price": 899,
+    "rating": 4.3,
+    "occasion": "casual",
+    "fabric": "denim"
+  },
+
+  {
+    "id": 12,
+    "name": "Women's Black Leggings",
+    "category": "leggings",
+    "color": "black",
+    "price": 299,
+    "rating": 4.5,
+    "occasion": "casual",
+    "fabric": "lycra"
+  },
+
+  {
+    "id": 13,
+    "name": "Women's Pink Lehenga",
+    "category": "lehenga",
+    "color": "pink",
+    "price": 1499,
+    "rating": 4.7,
+    "occasion": "wedding",
+    "fabric": "silk blend"
+  },
+
+  {
+    "id": 14,
+    "name": "Women's Black Night Pajama Set",
+    "category": "pajama",
+    "color": "black",
+    "price": 499,
+    "rating": 4.2,
+    "occasion": "sleepwear",
+    "fabric": "cotton"
+  },
+  {
+  "id": 15,
+  "name": "Women's Red Cotton Kurti",
+  "category": "kurti",
+  "color": "red",
+  "price": 449,
+  "rating": 4.3,
+  "occasion": "casual",
+  "fabric": "cotton"
+},
+{ 
+    
+  "id": 16,
+  "name": "Women's Red Printed Kurti",
+  "category": "kurti",
+  "color": "red",
+  "price": 399,
+  "rating": 4.1,
+  "occasion": "daily wear",
+  "fabric": "rayon"
+
+},
+{
+  "id": 17,
+  "name": "Women's Pink Printed Saree",
+  "category": "saree",
+  "color": "pink",
+  "price": 299,
+  "rating": 4.0,
+  "occasion": "casual",
+  "fabric": "cotton"
+},
+{
+  "id": 18,
+  "name": "Women's Green Cotton Saree",
+  "category": "saree",
+  "color": "green",
+  "price": 249,
+  "rating": 4.1,
+  "occasion": "daily wear",
+  "fabric": "cotton"
+},
+{
+  "id": 19,
+  "name": "Black Jacket",
+  "category": "jacket",
+  "color": "black",
+  "price":900,
+  "rating": 4.0
+}
+
+]
