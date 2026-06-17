@@ -16,3 +16,44 @@ Voice input — speech_recognition library, mic → text → your existing pipel
 Regional language testing — test 4-5 languages against your existing parser and see what breaks.
 Make it actually agentic — the agent should ask follow-up questions autonomously, not just replan silently.
 Then UI.
+
+TODO:
+Improve category extraction reliability
+
+Phase 1 (Now)
+-------------
+Flask UI
+    app.py
+    templates/index.html
+    static/style.css
+
+Phase 2
+-------------
+Agentic follow-up questions
+
+Phase 3
+-------------
+Regional language normalization
+
+Phase 4
+-------------
+README
+Demo Video
+Cleanup
+
+Option 2 (more agentic)
+
+If input isn't 1/2/3/4, treat it as a new search:
+
+Would you like to refine further?
+1. Occasion
+2. Color
+3. Budget
+4. No
+
+> சிவப்பு குர்த்தி
+
+Detected a new search query.
+Searching...
+
+That's cooler, but requires restructuring the loop.

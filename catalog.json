@@ -195,6 +195,16 @@
   "color": "black",
   "price":900,
   "rating": 4.0
+},
+{
+  "id": 20,
+  "name": "Women's Green Cotton Dupatta",
+  "category": "dupatta",
+  "color": "green",
+  "price": 229,
+  "rating": 4.2,
+  "occasion": "casual",
+  "fabric": "cotton"
 }
 
 ]
