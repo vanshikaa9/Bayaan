@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bayaan</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&family=Noto+Sans+Tamil:wght@400;500&family=Noto+Sans+Bengali:wght@400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<section class="hero">
+  <!-- floating scripts -->
+  <div class="floats">
+    <span class="fl">ब</span>
+    <span class="fl">ব</span>
+    <span class="fl">ப</span>
+    <span class="fl">బ</span>
+    <span class="fl">ಬ</span>
+    <span class="fl">બ</span>
+  </div>
+
+  <!-- logo -->
+  <div class="logo-wrap">
+    <div class="logo">Bay<span class="accent">a<span class="dot-i" style="font-style:normal">a</span>n</span></div>
+  </div>
+
+  <!-- script morph strip -->
+  <div class="morph-strip">
+    <span class="morph-word" style="font-family:'Noto Sans Devanagari',sans-serif">बयान</span>
+    <span class="morph-word" style="font-family:'Noto Sans Bengali',sans-serif">বয়ান</span>
+    <span class="morph-word" style="font-family:'Noto Sans Tamil',sans-serif">பயான்</span>
+    <span class="morph-word">Bayaan</span>
+  </div>
+
+  <p class="tagline">Search in the language you think in.</p>
+  <p class="subtext">A multilingual AI shopping companion that understands how Bharat speaks. Voice-first. Vernacular. Yours.</p>
+
+  <!-- language pills -->
+  <div class="lang-group" id="langGroup">
+    <button class="lang-pill active" data-lang="en-IN" onclick="selectLang(this)">English</button>
+    <button class="lang-pill" data-lang="hi-IN" onclick="selectLang(this)" style="font-family:'Noto Sans Devanagari',sans-serif">हिन्दी</button>
+    <button class="lang-pill" data-lang="ta-IN" onclick="selectLang(this)" style="font-family:'Noto Sans Tamil',sans-serif">தமிழ்</button>
+    <button class="lang-pill" data-lang="bn-IN" onclick="selectLang(this)" style="font-family:'Noto Sans Bengali',sans-serif">বাংলা</button>
+  </div>
+
+  <!-- search -->
+  <div class="search-wrap">
+    <input class="search-input" id="searchInput" type="text" placeholder="What are you looking for?" onkeydown="if(event.key==='Enter')doSearch()"/>
+    <button class="search-btn" onclick="doSearch()" aria-label="Search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+  </div>
+
+  <!-- mic -->
+  <div class="mic-wrap">
+    <button class="mic-btn" id="micBtn" onclick="toggleVoice()" aria-label="Voice search">
+      <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+    </button>
+    <span class="mic-label" id="micLabel">Tap to speak</span>
+  </div>
+
+  <p class="status-msg" id="statusMsg"></p>
+
+  <!-- animated wave bars at bottom -->
+  <div class="wave-bar-wrap">
+    <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+    <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="results-section" id="resultsSection">
+  <div class="divider"></div>
+  <p class="results-header" id="resultsHeader"></p>
+  <div class="agent-msg" id="agentMsg"></div>
+  <div class="product-grid" id="productGrid"></div>
+
+  <div class="refine-section" id="refineSection">
+    <p class="refine-title">Would you like to refine further?</p>
+    <div class="refine-chips">
+      <button class="refine-chip" onclick="showOccasions()">🎉 Occasion</button>
+      <button class="refine-chip" onclick="refineBy('budget')">💰 Budget</button>
+      <button class="refine-chip" onclick="refineBy('color')">🎨 Color</button>
+    </div>
+    <div class="occasion-wrap" id="occasionWrap">
+      <button class="occ-chip" onclick="applyOccasion('wedding',this)">Wedding</button>
+      <button class="occ-chip" onclick="applyOccasion('party',this)">Party</button>
+      <button class="occ-chip" onclick="applyOccasion('casual',this)">Casual</button>
+      <button class="occ-chip" onclick="applyOccasion('daily wear',this)">Daily wear</button>
+    </div>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <p>Nothing found.<br/>Try a different color, category, or budget.</p>
+  </div>
+</section>
+</body>
+</html>
