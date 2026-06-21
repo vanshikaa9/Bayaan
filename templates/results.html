@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bayaan Results</title>
+</head>
+<body>
+
+    <div class="page-overlay" id="pageOverlay"></div>
+
+    <main class="results-entrance" id="resultsMain">
+        <h1>Results Page</h1>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const overlay = document.getElementById('pageOverlay');
+        const main = document.getElementById('resultsMain');
+
+        requestAnimationFrame(() => {
+          if (overlay) {
+            overlay.classList.add('collapse');
+          }
+
+          setTimeout(() => {
+            if (overlay) overlay.style.display = 'none';
+            if (main) main.classList.add('arrived');
+          }, 450);
+        });
+      });
+    </script>
+
+</body>
+</html>

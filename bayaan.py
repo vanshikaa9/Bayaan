@@ -397,7 +397,14 @@ def recover_category(query, filters):
 
     return filters
 
-def correct_category(category):
+def correct_category(category, catalog=None):
+    if category is None:
+        return None
+    known = list(set(item["category"] for item in catalog)) if catalog else KNOWN_CATEGORIES
+    matches = get_close_matches(category.lower(), known, n=1, cutoff=0.4)
+    if matches:
+        return matches[0]
+    return category
 
     if category is None:
         return None
@@ -415,7 +422,21 @@ def correct_category(category):
     return category
 
 
-def search_catalog(filters):
+def search_catalog(filters, catalog):
+    results = []
+    for item in catalog:
+        if filters.get("category") is not None and item["category"].lower() != filters["category"].lower():
+            continue
+        if filters.get("color") is not None and item["color"].lower() != filters["color"].lower():
+            continue
+        if filters.get("max_price") is not None and item["price"] > filters["max_price"]:
+            continue
+        if filters.get("min_price") is not None and item["price"] < filters["min_price"]:
+            continue
+        if filters.get("occasion") is not None and item["occasion"].lower() != filters["occasion"].lower():
+            continue
+        results.append(item)
+    return results
 
     results = []
 
@@ -458,7 +479,37 @@ def search_catalog(filters):
 
 
 
-def replan(filters):
+def replan(filters, catalog, lang_messages=None):
+    default_messages = {
+        "replan_color": "No exact match found. Showing similar options within your budget.",
+        "replan_price": "No exact match in your budget. Showing same category at different prices.",
+        "replan_category": "That category wasn't available. Showing similar color options.",
+        "replan_none": "Nothing relevant found. Try simplifying your search."
+    }
+    msgs = lang_messages or default_messages
+
+    relaxed = filters.copy()
+    relaxed["color"] = None
+    results = search_catalog(relaxed, catalog)
+    if results:
+        return results, msgs["replan_color"]
+
+    relaxed = filters.copy()
+    relaxed["max_price"] = None
+    relaxed["min_price"] = None
+    results = search_catalog(relaxed, catalog)
+    if results:
+        return results, msgs["replan_price"]
+
+    relaxed = filters.copy()
+    relaxed["category"] = None
+    relaxed["max_price"] = None
+    relaxed["min_price"] = None
+    results = search_catalog(relaxed, catalog)
+    if results:
+        return results, msgs["replan_category"]
+
+    return [], msgs["replan_none"]
 
     # Round 1
     # Relax color, keep category + price
@@ -519,268 +570,3 @@ def has_filters(filters):
 
 # LANGUAGE SELECTION
 
-print("Choose Language")
-print("1 - Hindi")
-print("2 - English")
-print("3 - Tamil")
-print("4 - Bengali")
-
-choice = input("Choice: ")
-
-CURRENT_LANGUAGE = LANGUAGES.get(
-    choice,
-    LANGUAGES["2"]
-)
-
-print(
-    f"\nLanguage Selected: "
-    f"{CURRENT_LANGUAGE['name']}\n"
-)
-
-def ask_followup():
-
-    print(
-        "\n" +
-        CURRENT_LANGUAGE["messages"]["followup_title"]
-    )
-
-    print(
-        CURRENT_LANGUAGE["messages"]["followup_occasion"]
-    )
-
-    print(
-        CURRENT_LANGUAGE["messages"]["followup_color"]
-    )
-
-    print(
-        CURRENT_LANGUAGE["messages"]["followup_budget"]
-    )
-
-    print(
-        CURRENT_LANGUAGE["messages"]["followup_no"]
-    )
-
-    while True:
-
-        choice = input("> ").strip()
-
-        if choice in ["1", "2", "3", "4"]:
-            return choice
-
-        print(
-            CURRENT_LANGUAGE["messages"]["invalid_choice"]
-        )
-
-def ask_no_results_followup():
-
-    print("\nNo exact match found.")
-
-    print("1. Increase budget")
-    print("2. Change color")
-    print("3. Browse similar products")
-    print("4. Exit")
-
-    return input("> ")
-
-def refine_filters(filters, choice):
-
-    updated = filters.copy()
-
-    if choice == "1":
-
-        occasion = input(
-    CURRENT_LANGUAGE["messages"]["ask_occasion"]
-)
-        updated["occasion"] = occasion.lower()
-
-    elif choice == "2":
-
-     color = input(
-        CURRENT_LANGUAGE["messages"]["ask_color"]
-          ).lower()
-     updated["color"] = COLOR_ALIASES.get( color, color)
-
-    elif choice == "3":
-
-        budget = input(
-    CURRENT_LANGUAGE["messages"]["ask_budget"]
-)
-
-        try:
-            updated["max_price"] = int(budget)
-        except ValueError:
-            pass
-
-    return updated
-
-def relax_filters(filters, choice):
-
-    updated = filters.copy()
-
-    if choice == "1":
-
-        budget = input(
-            "New maximum budget: "
-        )
-
-        try:
-            updated["max_price"] = int(budget)
-        except ValueError:
-            pass
-
-    elif choice == "2":
-
-        color = input(
-            "New color: "
-        ).lower()
-
-        updated["color"] = COLOR_ALIASES.get(
-            color,
-            color
-        )
-
-    elif choice == "3":
-
-        updated["color"] = None
-        updated["max_price"] = None
-        updated["min_price"] = None
-
-    return updated
-
-
-#print(correct_category("jakct"))
-
-# MAIN LOOP
-while True:
-
-    mode = input("Type or Voice? ").lower()
-
-    if mode == "voice":
-
-        query = get_voice_query(
-            CURRENT_LANGUAGE["speech_code"]
-        )
-
-        if query is None:
-            continue
-
-        print(f"\nRecognized: {query}")
-
-    else:
-
-        query = input(
-    CURRENT_LANGUAGE["messages"]["search_prompt"] + " "
-)
-
-        if query.lower() == "exit":
-            break
-
-    normalized_query = normalize_query(query)
-    #print("\nNORMALIZED QUERY:")
-    #print(normalized_query)
-    
-
-    filters = parse_query(
-        normalized_query
-    )
-    #print("\nRAW FILTERS:")
-    #print(filters)
-
-    filters = recover_category(
-    normalized_query,
-    filters
-)
-
-
-
-    if not has_filters(filters):
-        print(
-            CURRENT_LANGUAGE["messages"]["couldnt_understand"]
-        )
-        continue
-
-    original_category = filters.get("category")
-
-    corrected_category = correct_category(original_category)
-
-    if original_category != corrected_category:
-        print(
-            f"Corrected category: "
-            f"{original_category} -> {corrected_category}"
-        )
-
-    filters["category"] = corrected_category
-
-    print("\nExtracted Filters:")
-    print(filters)
-
-    results = search_catalog(filters)
-    print("\nMatching Products:")
-
-    if not results:
-
-        results, message = replan(filters)
-
-        print("\n" + message)
-       
-
-    if not results:
-
-        print(
-            CURRENT_LANGUAGE["messages"]["no_results"]
-        )
-
-        choice = ask_no_results_followup()
-
-        if choice != "4":
-
-            filters = relax_filters(
-               filters,
-                choice
-            )
-
-            results = search_catalog(filters)
-
-            print("\nUpdated Results:")
-
-            if not results:
-
-                print(
-                    CURRENT_LANGUAGE["messages"]["no_results"]
-                )
-
-            else:
-
-                for product in results:
-                     print(product)
-
-    else:
-
-        for product in results:
-            print(product)
-
-        choice = ask_followup()
-
-        if choice != "4":
-
-            filters = refine_filters(
-            filters,
-            choice
-        )
-
-            results = search_catalog(filters)
-
-            print("\nRefined Results:")
-
-            if not results:
-
-                print(
-                    CURRENT_LANGUAGE["messages"]["no_results"]
-            )
-
-            else:
-
-                for product in results:
-                    print(product)
-
-   

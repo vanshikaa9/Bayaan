@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "react-bits-mcp-server": "github:duolabstech/react-bits-mcp-server"
+  }
+}
