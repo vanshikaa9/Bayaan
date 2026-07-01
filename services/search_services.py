@@ -7,10 +7,11 @@ from bayaan import (
     has_filters
 )
 from providers.json_provider import JsonProvider
+from languages import get_message
 
 provider = JsonProvider()
 
-def search_products(query, replan_messages):
+def search_products(query, lang="en-IN"):
     try:
         catalog = provider.get_catalog()
 
@@ -49,7 +50,7 @@ def search_products(query, replan_messages):
             return {
                 "results": [],
                 "filters": filters,
-                "message": "Couldn't understand your search. Try again."
+                "message": get_message(lang, "couldnt_understand")
             }
 
         # Step 5: Query search catalog through the provider
@@ -67,11 +68,12 @@ def search_products(query, replan_messages):
                 results, message = replan(
                     filters,
                     catalog,
-                    replan_messages
+                    search_fn=provider.search_catalog,
+                    lang=lang
                 )
             except Exception as e:
                 print(f"Error during search replanning: {e}")
-                results, message = [], "Something went wrong while relaxing filters."
+                results, message = [], get_message(lang, "replan_error")
 
         return {
             "results": results,
@@ -84,5 +86,5 @@ def search_products(query, replan_messages):
         return {
             "results": [],
             "filters": {},
-            "message": "An error occurred during search. Please try again."
+            "message": get_message(lang, "search_error")
         }

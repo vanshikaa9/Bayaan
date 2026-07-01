@@ -46,7 +46,13 @@ LANGUAGES = {
 "अधिकतम कीमत: ",
 
 "invalid_choice":
-"कृपया 1, 2, 3 या 4 चुनें।", }
+"कृपया 1, 2, 3 या 4 चुनें।",
+
+            "replan_error":
+            "फ़िल्टर शिथिल करते समय कुछ गलत हो गया।",
+
+            "search_error":
+            "खोज के दौरान एक त्रुटि हुई। कृपया पुनः प्रयास करें।", }
  },
 
     "2": {
@@ -95,7 +101,13 @@ LANGUAGES = {
 "ask_budget":
 "Maximum price: " ,
 "invalid_choice":
-"Please enter 1, 2, 3, or 4.",}
+"Please enter 1, 2, 3, or 4.",
+
+            "replan_error":
+            "Something went wrong while relaxing filters.",
+
+            "search_error":
+            "An error occurred during search. Please try again.",}
     },
 
     "3": {
@@ -145,7 +157,13 @@ LANGUAGES = {
 "அதிகபட்ச விலை: ",
 
 "invalid_choice":
-"தயவுசெய்து 1, 2, 3 அல்லது 4 ஐ தேர்வு செய்யவும்.", }
+"தயவுசெய்து 1, 2, 3 அல்லது 4 ஐ தேர்வு செய்யவும்.",
+
+        "replan_error":
+        "வடிகட்டல்களை தளர்த்தும்போது ஏதோ பிழை ஏற்பட்டது.",
+
+        "search_error":
+        "தேடலின் போது பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.", }
     },
     
 "4": {
@@ -194,7 +212,41 @@ LANGUAGES = {
 "সর্বোচ্চ মূল্য: ",
 "invalid_choice":
 "অনুগ্রহ করে 1, 2, 3 অথবা 4 নির্বাচন করুন।",
+
+        "replan_error":
+        "ফিল্টার শিথিল করার সময় কিছু ভুল হয়েছে।",
+
+        "search_error":
+        "অনুসন্ধানের সময় একটি ত্রুটি ঘটেছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
         }
     }
 }
-    
+
+DEFAULT_SPEECH_CODE = "en-IN"
+
+REPLAN_MESSAGE_KEYS = (
+    "replan_color",
+    "replan_price",
+    "replan_category",
+    "replan_none",
+)
+
+
+def get_messages_for_speech_code(speech_code):
+    code = speech_code or DEFAULT_SPEECH_CODE
+    for entry in LANGUAGES.values():
+        if entry.get("speech_code") == code:
+            return entry["messages"]
+    for entry in LANGUAGES.values():
+        if entry.get("speech_code") == DEFAULT_SPEECH_CODE:
+            return entry["messages"]
+    return LANGUAGES["2"]["messages"]
+
+
+def get_message(speech_code, key):
+    return get_messages_for_speech_code(speech_code)[key]
+
+
+def get_replan_messages(speech_code):
+    messages = get_messages_for_speech_code(speech_code)
+    return {key: messages[key] for key in REPLAN_MESSAGE_KEYS}

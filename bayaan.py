@@ -6,11 +6,8 @@ from dotenv import load_dotenv
 
 from difflib import get_close_matches
 
-import speech_recognition as sr
-import sounddevice as sd
-from scipy.io.wavfile import write
+from languages import get_replan_messages, DEFAULT_SPEECH_CODE
 
-from languages import LANGUAGES
 
 # Load environment variables
 load_dotenv()
@@ -135,40 +132,6 @@ def load_catalog():
     except FileNotFoundError:
         print("catalog.json not found")
         return []
-    
-def get_voice_query(language_code):
-    fs = 44100
-    seconds = 5
-
-    print(CURRENT_LANGUAGE["messages"]["voice_prompt"])
-
-    recording = sd.rec(
-        int(seconds * fs),
-        samplerate=fs,
-        channels=1,
-        dtype="int16"
-    )
-
-    sd.wait()
-
-    write("temp.wav", fs, recording)
-
-    recognizer = sr.Recognizer()
-
-    try:
-        with sr.AudioFile("temp.wav") as source:
-            audio = recognizer.record(source)
-
-        text = recognizer.recognize_google(
-            audio,
-            language=language_code
-        )
-
-        return text
-
-    except Exception as e:
-        print("Voice Error:", e)
-        return None
 
 CATEGORY_ALIASES = {
     "saree": "saree",
@@ -445,44 +408,19 @@ def correct_category(category, catalog=None):
     return category
 
 
-def search_catalog(filters, catalog):
-    results = []
-    for item in catalog:
-        if filters.get("category") is not None and item.get("category", "").lower() != filters["category"].lower():
-            continue
-        if filters.get("color") is not None and item.get("color", "").lower() != filters["color"].lower():
-            continue
-        if filters.get("max_price") is not None and item.get("price", 0) > filters["max_price"]:
-            continue
-        if filters.get("min_price") is not None and item.get("price", 0) < filters["min_price"]:
-            continue
-        if filters.get("occasion") is not None and item.get("occasion", "").lower() != filters["occasion"].lower():
-            continue
-        results.append(item)
-    return results
-
-
-
-
-def replan(filters, catalog, lang_messages=None):
-    default_messages = {
-        "replan_color": "No exact match found. Showing similar options within your budget.",
-        "replan_price": "No exact match in your budget. Showing same category at different prices.",
-        "replan_category": "That category wasn't available. Showing similar color options.",
-        "replan_none": "Nothing relevant found. Try simplifying your search."
-    }
-    msgs = lang_messages or default_messages
+def replan(filters, catalog, *, search_fn, lang=None):
+    msgs = get_replan_messages(lang or DEFAULT_SPEECH_CODE)
 
     relaxed = filters.copy()
     relaxed["color"] = None
-    results = search_catalog(relaxed, catalog)
+    results = search_fn(relaxed)
     if results:
         return results, msgs["replan_color"]
 
     relaxed = filters.copy()
     relaxed["max_price"] = None
     relaxed["min_price"] = None
-    results = search_catalog(relaxed, catalog)
+    results = search_fn(relaxed)
     if results:
         return results, msgs["replan_price"]
 
@@ -490,7 +428,7 @@ def replan(filters, catalog, lang_messages=None):
     relaxed["category"] = None
     relaxed["max_price"] = None
     relaxed["min_price"] = None
-    results = search_catalog(relaxed, catalog)
+    results = search_fn(relaxed)
     if results:
         return results, msgs["replan_category"]
 
@@ -500,7 +438,4 @@ def replan(filters, catalog, lang_messages=None):
 
 def has_filters(filters):
     return any(value is not None for value in filters.values())
-
-
-# LANGUAGE SELECTION
 
