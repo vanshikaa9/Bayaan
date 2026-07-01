@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ product.name }} — Bayaan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="product-page">
+    <a class="product-page__back" href="/">← Back to Bayaan</a>
+    <article class="product-page__card">
+      <div class="product-page__image-wrap">
+        <img id="productPageImage" alt="{{ product.name }}" />
+      </div>
+      <div class="product-page__body">
+        <span class="product-modal__category">{{ product.category }}</span>
+        <h1 class="product-modal__name">{{ product.name }}</h1>
+        <p class="product-modal__price">₹{{ product.price }}</p>
+        <div class="product-modal__details">
+          <div class="product-modal__detail"><span>Fabric</span><strong>{{ product.fabric or '—' }}</strong></div>
+          <div class="product-modal__detail"><span>Occasion</span><strong>{{ product.occasion or '—' }}</strong></div>
+          <div class="product-modal__detail"><span>Rating</span><strong id="productPageRating"></strong></div>
+        </div>
+        <p class="product-modal__reason" id="productPageReason"></p>
+      </div>
+    </article>
+  </main>
+  <script src="{{ url_for('static', filename='productImages.js') }}?v=3.1"></script>
+  <script>
+    const product = {{ product | tojson }};
+    document.getElementById('productPageImage').src = getProductImage(product);
+    const r = product.rating || 0;
+    document.getElementById('productPageRating').textContent =
+      r ? '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r)) : '—';
+    document.getElementById('productPageReason').textContent = getRecommendationReason(product);
+  </script>
+</body>
+</html>

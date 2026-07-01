@@ -1,17 +1,14 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify
-from bayaan import (
-    parse_query,
-    search_catalog,
-    replan,
-    recover_category,
-    correct_category,
-    normalize_query,
-    has_filters,
-    load_catalog
-)
+from services.search_services import search_products
+from services.product_services import get_product
+
+load_dotenv()
+
 
 app = Flask(__name__)
-catalog = load_catalog()
+
 
 REPLAN_MESSAGES = {
     "replan_color": "No exact match found. Showing similar options within your budget.",
@@ -28,39 +25,35 @@ def home():
 def results():
     return render_template("results.html")
 
+@app.route("/product/<int:product_id>")
+@app.route("/product/<int:product_id>/<slug>")
+def product_page(product_id, slug=None):
+    item = get_product(product_id)
+    if not item:
+        return render_template("index.html"), 404
+    return render_template("product.html", product=item)
+
 @app.route("/search", methods=["POST"])
 def search():
+
     data = request.get_json()
+
     query = data.get("query", "").strip()
 
     if not query:
-        return jsonify({"results": [], "filters": {}, "message": ""})
-
-    normalized = normalize_query(query)
-    filters = parse_query(normalized)
-    filters = recover_category(normalized, filters)
-
-    original_category = filters.get("category")
-    filters["category"] = correct_category(original_category)
-
-    if not has_filters(filters):
         return jsonify({
             "results": [],
-            "filters": filters,
-            "message": "Couldn't understand your search. Try again."
+            "filters": {},
+            "message": ""
         })
 
-    results = search_catalog(filters, catalog)
-    message = ""
+    response = search_products(
+        query,
+        REPLAN_MESSAGES
+    )
 
-    if not results:
-        results, message = replan(filters, catalog, REPLAN_MESSAGES)
-
-    return jsonify({
-        "results": results,
-        "filters": filters,
-        "message": message
-    })
+    return jsonify(response)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

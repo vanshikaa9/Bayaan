@@ -1,6 +1,8 @@
 
 import requests
 import json
+import os
+from dotenv import load_dotenv
 
 from difflib import get_close_matches
 
@@ -9,6 +11,13 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 
 from languages import LANGUAGES
+
+# Load environment variables
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
 
 PROMPT_TEMPLATE = """
 You are an e-commerce search query parser.
@@ -161,156 +170,7 @@ def get_voice_query(language_code):
         print("Voice Error:", e)
         return None
 
-        
-def normalize_query(query):
-    prompt = f"""
-You are a multilingual e-commerce assistant.
-
-The user may speak in Hindi, Tamil,
-Telugu, Bengali, Hinglish, or English.
-
-Convert the shopping query into
-standard English shopping terms.
-
-Examples:
-
-சிவப்பு சேலை -> red saree
-பச்சை சேலை -> green saree
-
-লাল শাড়ি -> red saree
-সবুজ শাড়ি -> green saree
-
-लाल साड़ी -> red saree
-हरा दुपट्टा -> green dupatta
-
-Return ONLY the normalized query.
-
-Query:
-{query}
-"""
-
-    payload = {
-        "model": "qwen2.5:3b",
-        "stream": False,
-        "options": {
-            "temperature": 0
-        },
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    }
-
-    try:
-
-        response = requests.post(
-            "http://localhost:11434/api/chat",
-            json=payload,
-            timeout=60
-        )
-
-        response.raise_for_status()
-
-        normalized = response.json()[
-            "message"
-        ]["content"].strip()
-
-        return normalized
-
-    except Exception:
-
-        return query       
-
-def parse_query(query):
-    prompt = PROMPT_TEMPLATE.replace("{query}", query)
-
-    payload = {
-        "model": "qwen2.5:3b",
-        "stream": False,
-        "options": {
-            "temperature": 0
-        },
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    }
-    try:
-        response = requests.post(
-            "http://localhost:11434/api/chat",
-            json=payload,
-            timeout=60
-        )
-
-        response.raise_for_status()
-
-        model_output = response.json()["message"]["content"].strip()
-       
-        # Handle ```json ... ``` wrappers
-        if model_output.startswith("```"):
-            model_output = model_output.replace(
-                "```json",
-                ""
-            )
-            model_output = model_output.replace(
-                "```",
-                ""
-            )
-            model_output = model_output.strip()
-
-        try:
-
-            filters = json.loads(model_output)
-
-           # print("\nRAW MODEL OUTPUT:")
-            #print(model_output)
-
-            for key, value in filters.items():
-
-                if value == "null":
-                    filters[key] = None
-
-            return filters
-
-        except json.JSONDecodeError:
-
-            print("Invalid JSON returned by model:")
-            print(model_output)
-
-            return {
-                "category": None,
-                "color": None,
-                "max_price": None,
-                "min_price": None,
-                "occasion": None,
-                "gender": None
-            }
-
-        
-    except requests.RequestException as e:
-       print(f"Ollama API Error: {e}")
-
-    return {
-        "category": None,
-        "color": None,
-        "max_price": None,
-        "min_price": None,
-        "occasion": None,
-        "gender": None
-    }
-
-
-catalog = load_catalog()
-
-KNOWN_CATEGORIES = list(
-    set(item["category"] for item in catalog)
-)
 CATEGORY_ALIASES = {
-
     "saree": "saree",
     "sari": "saree",
     "saari": "saree",
@@ -321,8 +181,6 @@ CATEGORY_ALIASES = {
     "kurtti": "kurti",
     "kurtee": "kurti",
     "kurta": "kurti",
-    
-
 
     "salwar": "salwar suit",
     "suit": "salwar suit",
@@ -353,8 +211,8 @@ CATEGORY_ALIASES = {
     "pyjama": "pajama",
     "night suit": "pajama"
 }
-COLOR_ALIASES = {
 
+COLOR_ALIASES = {
     "laal": "red",
     "lal": "red",
     "red": "red",
@@ -376,6 +234,176 @@ COLOR_ALIASES = {
     "safed": "white",
     "white": "white"
 }
+
+def fallback_parse_query(query):
+    """
+    Fallback parser that extracts filters from the query using rule-based/regex logic
+    if the Groq API call fails or is not configured.
+    """
+    import re
+    query_lower = query.lower()
+    
+    filters = {
+        "category": None,
+        "color": None,
+        "max_price": None,
+        "min_price": None,
+        "occasion": None,
+        "gender": None
+    }
+    
+    # Extract Color
+    for keyword, color_val in COLOR_ALIASES.items():
+        if re.search(r'\b' + re.escape(keyword) + r'\b', query_lower):
+            filters["color"] = color_val
+            break
+
+    # Extract Category
+    for keyword, cat_val in CATEGORY_ALIASES.items():
+        if re.search(r'\b' + re.escape(keyword) + r'\b', query_lower):
+            filters["category"] = cat_val
+            break
+            
+    # Extract Price
+    price_matches = re.findall(r'\b\d+\b', query_lower)
+    if price_matches:
+        price_num = int(price_matches[0])
+        max_price_keywords = ["under", "below", "kam", "andar", "tak", "less", "within", "max", "se kam", "ke andar"]
+        min_price_keywords = ["above", "more", "zyada", "greater", "min", "se zyada", "se jyada"]
+        
+        is_min = any(keyword in query_lower for keyword in min_price_keywords)
+        
+        if is_min:
+            filters["min_price"] = price_num
+        else:
+            filters["max_price"] = price_num
+
+    # Extract Occasion
+    occasions = ["wedding", "party", "casual", "daily wear", "sleepwear"]
+    for occ in occasions:
+        if occ in query_lower:
+            filters["occasion"] = occ
+            break
+            
+    if "women" in query_lower or "girl" in query_lower or "female" in query_lower:
+        filters["gender"] = "women"
+    elif "men" in query_lower or "boy" in query_lower or "male" in query_lower:
+        filters["gender"] = "men"
+
+    print(f"Fallback parser executed. Extracted: {filters}")
+    return filters
+
+def normalize_query(query):
+    if not GROQ_API_KEY:
+        print("Warning: GROQ_API_KEY is not configured. Skipping normalization.")
+        return query
+
+    prompt = f"""
+You are a multilingual e-commerce assistant.
+
+The user may speak in Hindi, Tamil,
+Telugu, Bengali, Hinglish, or English.
+
+Convert the shopping query into
+standard English shopping terms.
+
+Examples:
+
+சிவப்பு சேலை -> red saree
+பச்சை சேலை -> green saree
+
+লাল শাড়ি -> red saree
+সবুজ শাড়ি -> green saree
+
+লাল শাড়ি -> red saree
+हरा दुपट्टा -> green dupatta
+
+Return ONLY the normalized query. Do not add any explanation or preamble.
+
+Query:
+{query}
+"""
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0,
+        "stream": False
+    }
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=15
+        )
+        response.raise_for_status()
+        content = response.json()["choices"][0]["message"]["content"].strip()
+        if content.startswith('"') and content.endswith('"'):
+            content = content[1:-1].strip()
+        return content
+    except Exception as e:
+        print(f"Groq Normalization API Error: {e}. Falling back to original query.")
+        return query       
+
+def parse_query(query):
+    if not GROQ_API_KEY:
+        print("Warning: GROQ_API_KEY is not configured. Using fallback parser.")
+        return fallback_parse_query(query)
+
+    prompt = PROMPT_TEMPLATE.replace("{query}", query)
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0,
+        "stream": False,
+        "response_format": {"type": "json_object"}
+    }
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=15
+        )
+        response.raise_for_status()
+        model_output = response.json()["choices"][0]["message"]["content"].strip()
+       
+        if model_output.startswith("```"):
+            model_output = model_output.replace("```json", "")
+            model_output = model_output.replace("```", "")
+            model_output = model_output.strip()
+
+        try:
+            filters = json.loads(model_output)
+            for key, value in filters.items():
+                if value == "null" or value == "None":
+                    filters[key] = None
+            return filters
+        except json.JSONDecodeError:
+            print("Invalid JSON returned by Groq model:")
+            print(model_output)
+            return fallback_parse_query(query)
+        
+    except Exception as e:
+        print(f"Groq Query Parsing API Error: {e}. Using fallback parser.")
+        return fallback_parse_query(query)
+
+catalog = load_catalog()
+
+KNOWN_CATEGORIES = list(
+    set(item["category"] for item in catalog)
+)
 
 def recover_category(query, filters):
 
@@ -420,15 +448,15 @@ def correct_category(category, catalog=None):
 def search_catalog(filters, catalog):
     results = []
     for item in catalog:
-        if filters.get("category") is not None and item["category"].lower() != filters["category"].lower():
+        if filters.get("category") is not None and item.get("category", "").lower() != filters["category"].lower():
             continue
-        if filters.get("color") is not None and item["color"].lower() != filters["color"].lower():
+        if filters.get("color") is not None and item.get("color", "").lower() != filters["color"].lower():
             continue
-        if filters.get("max_price") is not None and item["price"] > filters["max_price"]:
+        if filters.get("max_price") is not None and item.get("price", 0) > filters["max_price"]:
             continue
-        if filters.get("min_price") is not None and item["price"] < filters["min_price"]:
+        if filters.get("min_price") is not None and item.get("price", 0) < filters["min_price"]:
             continue
-        if filters.get("occasion") is not None and item["occasion"].lower() != filters["occasion"].lower():
+        if filters.get("occasion") is not None and item.get("occasion", "").lower() != filters["occasion"].lower():
             continue
         results.append(item)
     return results
