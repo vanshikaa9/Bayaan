@@ -128,43 +128,39 @@ def load_catalog():
         return []
     
 def get_voice_query(language_code):
-        fs = 44100
-        seconds = 5
+    fs = 44100
+    seconds = 5
 
-        print(
-    CURRENT_LANGUAGE["messages"]["voice_prompt"]
-)
+    print(CURRENT_LANGUAGE["messages"]["voice_prompt"])
 
-        recording = sd.rec(
-            int(seconds * fs),
-            samplerate=fs,
-            channels=1,
-            dtype="int16"
+    recording = sd.rec(
+        int(seconds * fs),
+        samplerate=fs,
+        channels=1,
+        dtype="int16"
     )
 
-        sd.wait()
+    sd.wait()
 
-        write("temp.wav", fs, recording)
+    write("temp.wav", fs, recording)
 
-        recognizer = sr.Recognizer()
+    recognizer = sr.Recognizer()
 
-        try:
-            with sr.AudioFile("temp.wav") as source:
-                audio = recognizer.record(source)
+    try:
+        with sr.AudioFile("temp.wav") as source:
+            audio = recognizer.record(source)
 
-            text = recognizer.recognize_google(
-                audio,
-                #language="hi-IN"
-                #language="en-IN"
-                language=language_code
-                
+        text = recognizer.recognize_google(
+            audio,
+            language=language_code
         )
 
-            return text
+        return text
 
-        except Exception as e:
-            print("Voice Error:", e)
-            return None
+    except Exception as e:
+        print("Voice Error:", e)
+        return None
+
         
 def normalize_query(query):
     prompt = f"""
@@ -398,20 +394,19 @@ def recover_category(query, filters):
     return filters
 
 def correct_category(category, catalog=None):
-    if category is None:
-        return None
-    known = list(set(item["category"] for item in catalog)) if catalog else KNOWN_CATEGORIES
-    matches = get_close_matches(category.lower(), known, n=1, cutoff=0.4)
-    if matches:
-        return matches[0]
-    return category
 
     if category is None:
         return None
+
+    known = (
+        list(set(item["category"] for item in catalog))
+        if catalog
+        else KNOWN_CATEGORIES
+    )
 
     matches = get_close_matches(
         category.lower(),
-        KNOWN_CATEGORIES,
+        known,
         n=1,
         cutoff=0.4
     )
@@ -436,44 +431,6 @@ def search_catalog(filters, catalog):
         if filters.get("occasion") is not None and item["occasion"].lower() != filters["occasion"].lower():
             continue
         results.append(item)
-    return results
-
-    results = []
-
-    for item in catalog:
-
-        if (
-           filters.get("category") is not None
-            and item["category"].lower() !=filters["category"].lower()
-        ):
-            continue
-
-        if (
-            filters.get("color") is not None
-            and item["color"].lower() !=filters["color"].lower()
-        ):
-            continue
-
-        if (
-           filters.get("max_price")is not None
-            and item["price"] > filters["max_price"]
-        ):
-            continue
-
-        if (
-           filters.get("min_price")is not None
-            and item["price"] < filters["min_price"]
-        ):
-            continue
-        if (
-    filters.get("occasion") is not None
-    and item["occasion"].lower()
-    != filters["occasion"].lower()
-):
-         continue
-
-        results.append(item)
-
     return results
 
 
@@ -511,58 +468,7 @@ def replan(filters, catalog, lang_messages=None):
 
     return [], msgs["replan_none"]
 
-    # Round 1
-    # Relax color, keep category + price
-
-    relaxed = filters.copy()
-    relaxed["color"] = None
-
-    results = search_catalog(relaxed)
-
-    if results:
-        return (
-            results,
-            CURRENT_LANGUAGE["messages"]["replan_color"]
-           
-        )
-
-    # Round 2
-    # Relax price, keep category
-
-    relaxed = filters.copy()
-    relaxed["max_price"] = None
-    relaxed["min_price"] = None
-
-    results = search_catalog(relaxed)
-    if results:
-        return (
-            results,
-            CURRENT_LANGUAGE["messages"]["replan_price"]
-        )
-
-    # Round 3
-    # Relax category, keep color
-
-    relaxed = filters.copy()
-    relaxed["category"] = None
-    relaxed["max_price"] = None
-    relaxed["min_price"] = None
-
-    results = search_catalog(relaxed)
-
-    if results:
-        return (
-            results,
-           CURRENT_LANGUAGE["messages"]["replan_category"]
-        )
-
-    # Round 4
-    # Nothing found
-
-    return (
-    [],
-    CURRENT_LANGUAGE["messages"]["replan_none"]
-)
+     
 
 def has_filters(filters):
     return any(value is not None for value in filters.values())
